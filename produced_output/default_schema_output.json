@@ -1,0 +1,104 @@
+[
+  {
+    "candidate_id": "cand_001",
+    "full_name": "Alexander Wright",
+    "headline": "Lead Software Architect",
+    "emails": [
+      "alex.wright@techcorp.com",
+      "alexander.wright@gmail.com"
+    ],
+    "phones": [
+      "+11234567890"
+    ],
+    "location": {
+      "city": "New York",
+      "region": "NY",
+      "country": "US"
+    },
+    "links": {
+      "linkedin": "linkedin.com/in/alexander-wright",
+      "github": "github.com/alexwright",
+      "portfolio": "alexwright.dev",
+      "other": []
+    },
+    "years_experience": 8.5,
+    "skills": [
+      {
+        "name": "Java",
+        "confidence": 0.98,
+        "sources": [
+          "recruiter_spreadsheet.csv"
+        ]
+      },
+      {
+        "name": "React",
+        "confidence": 0.92,
+        "sources": [
+          "alex_wright_resume.pdf"
+        ]
+      },
+      {
+        "name": "Spring Boot",
+        "confidence": 0.95,
+        "sources": [
+          "recruiter_spreadsheet.csv",
+          "alex_wright_resume.pdf"
+        ]
+      },
+      {
+        "name": "SQL",
+        "confidence": 0.9,
+        "sources": [
+          "recruiter_spreadsheet.csv"
+        ]
+      }
+    ],
+    "experience": [
+      {
+        "company": "Tech Corp",
+        "title": "Lead Software Architect",
+        "start": "2022-01",
+        "end": "2024-05",
+        "summary": "Led the migration from monolithic architecture to Java/Spring Boot microservices. Designed real-time event-driven data streaming pipelines."
+      },
+      {
+        "company": "App Solutions",
+        "title": "Senior Software Engineer",
+        "start": "2018-06",
+        "end": "2021-12",
+        "summary": "Developed reactive web applications using React, Redux, and Node.js. Optimized database query performance and API latency by 40%."
+      }
+    ],
+    "education": [
+      {
+        "institution": "Stanford University",
+        "degree": "Bachelor of Science",
+        "field": "Computer Science",
+        "end_year": "2018"
+      }
+    ],
+    "provenance": [
+      {
+        "field": "fullName",
+        "source": "recruiter_spreadsheet.csv",
+        "method": "CSV_PARSER"
+      },
+      {
+        "field": "headline",
+        "source": "alex_wright_resume.pdf",
+        "method": "HEURISTIC_PARSER"
+      },
+      {
+        "field": "location",
+        "source": "alex_wright_resume.pdf",
+        "method": "HEURISTIC_PARSER"
+      },
+      {
+        "field": "yearsOfExperience",
+        "source": "alex_wright_resume.pdf",
+        "method": "HEURISTIC_PARSER"
+      }
+    ],
+    "overall_confidence": 0.94
+  }
+]

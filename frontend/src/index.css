@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', sans-serif;
+  
+  --color-brand-50: #f0fafb;
+  --color-brand-100: #d2f2f4;
+  --color-brand-200: #a5e5e9;
+  --color-brand-300: #6ed4da;
+  --color-brand-400: #33c1c8;
+  --color-brand-500: #00b2a9;
+  --color-brand-600: #00928b;
+  --color-brand-700: #007771;
+  --color-brand-800: #005d58;
+  --color-brand-900: #004743;
+  --color-brand-950: #002725;
+  
+  --color-indigo-50: #f1f8fc;
+  --color-indigo-100: #e0f0fa;
+  --color-indigo-200: #b8def3;
+  --color-indigo-300: #8bc7ec;
+  --color-indigo-400: #3186c8;
+  --color-indigo-500: #187aba;
+  --color-indigo-600: #105e94;
+  --color-indigo-700: #0c4873;
+  --color-indigo-800: #083250;
+  --color-indigo-900: #052339;
+  --color-indigo-950: #02101b;
+  
+  --color-dark-50: #f0f4f9;
+  --color-dark-100: #e1e8f0;
+  --color-dark-800: #172337;
+  --color-dark-900: #0e1828;
+  --color-dark-950: #050a12;
+}
+
+/* Global Styles */
+html, body {
+  font-family: var(--font-sans);
+  background-color: var(--color-dark-950);
+  color: var(--color-dark-100);
+  scroll-behavior: smooth;
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-dark-950);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-dark-800);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-500);
+}
+
+/* Micro-animations */
+.fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: rgba(30, 41, 59, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-card {
+  background: rgba(30, 41, 59, 0.3);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: rgba(22, 34, 53, 0.4);
+  border-color: rgba(0, 178, 169, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 178, 169, 0.1);
+}

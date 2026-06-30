@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Alexander Wright",
+    "primary_email": "alex.wright@techcorp.com",
+    "phone": "+11234567890",
+    "skills": [
+      "Java",
+      "React",
+      "Spring Boot",
+      "SQL"
+    ],
+    "overall_confidence": 0.94
+  }
+]
