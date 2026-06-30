@@ -1,62 +1,47 @@
-# Technical Design: Multi-Source Candidate Data Transformer
+# Technical Design: Multi-Source Candidate Data Transformer (TalentMerge)
 
-This document outlines the high-level system design, pipeline mechanics, schema normalizations, conflict resolution rules, and edge-case behaviors of the **TalentMerge** transformer platform.
-
----
-
-## 1. Data Pipeline Breakdown
-The candidate transformation pipeline executes in a modular, decoupled flow:
-`Detect & Load` $\rightarrow$ `Extract Raw` $\rightarrow$ `Normalize Formats` $\rightarrow$ `Match & Deduplicate` $\rightarrow$ `Resolve Conflicts` $\rightarrow$ `Compute Confidence` $\rightarrow$ `Project Output` $\rightarrow$ `Validate Schema`
-
-1.  **Detect & Ingest**: Receives uploads (CSV spreadsheet rows or unstructured PDF resumes).
-2.  **Extract Raw**: Parses files using dedicated processors (`OpenCSV` / `PDFBox`), storing unmerged records in a raw candidate table.
-3.  **Normalize Formats**: Cleans name spacing, reformats phone numbers to `E.164`, and runs raw skill strings against a canonical dictionary.
-4.  **Match & Deduplicate**: Computes Jaro-Winkler string similarity scores on candidate names alongside exact checks on emails/phones to isolate duplicates.
-5.  **Resolve Conflicts**: Merges attributes from multiple raw sources using source priority rules (PDF overrides CSV) and computes an overall confidence weight.
-6.  **Project & Validate**: Projects the canonical candidate records into a client's custom schema at runtime using a JSON configuration.
+This document outlines the architecture, pipeline stages, deduplication strategy, conflict-resolution policies, and dynamic schema projection layer of the **TalentMerge** data transformer platform.
 
 ---
 
-## 2. Canonical Output Schema & Normalizations
-The canonical record acts as the single source of truth:
-*   **Canonical Profile**: `id`, `fullName`, `headline`, `location`, `yearsOfExperience`, `overallConfidence`, and child lists of standardized emails, phones, URLs, skills, experiences, and educations.
-*   **Normalized Formats**:
-    *   *Names*: Stripped of leading/trailing spaces, multiple inner spaces collapsed, formatted to Title Case.
-    *   *Phones*: Formatted to **E.164** format (e.g. `+11234567890`) via a cleaning regex pattern.
-    *   *Skills*: Standardized using a lookup table (e.g. mapping `reactjs` or `react.js` to `React`).
-    *   *Timelines*: Job experience and education dates standardized to ISO-8601 strings.
+## 1. System Pipeline Architecture
+The transformation engine ingests multi-source profiles and executes a decoupled, transactional pipeline:
+`Ingest & Load` $\rightarrow$ `Text Extraction` $\rightarrow$ `Sanitize & Normalize` $\rightarrow$ `Deduplication (Similarity Engine)` $\rightarrow$ `Conflict Resolution` $\rightarrow$ `Overall Confidence Calculation` $\rightarrow$ `Dynamic Schema Projection`
+
+*   **Ingestion & Parsing:** Parallel upload processors ingest structured tabular data (`OpenCSV`) and unstructured resume PDF streams (`Apache PDFBox`).
+*   **Normalized Baseline:** Raw attributes are cleaned immediately: names are title-cased and whitespace-trimmed; phone numbers are cleaned via regex to E.164 formats (e.g. `+11234567890`); skill tags are standardized via an alias dictionary mapping (e.g. `react.js` $\rightarrow$ `React`).
 
 ---
 
-## 3. Merge & Conflict-Resolution Policy
-*   **Match Keys**: Exact email match, exact phone match, or weighted Jaro-Winkler string similarity score $\ge 0.85$ on names.
-*   **Conflict Resolution**: Staged prioritizations are applied. Higher fidelity sources are weighted over structured ones:
-    $$\text{PDF Resume (Priority 2)} > \text{Recruiter CSV Export (Priority 1)}$$
-    If priorities are equal, the system resolves conflicts using the most recently extracted record timestamp.
-*   **Confidence Weights**: Calculated by aggregating individual field extraction scores (degraded if parsed using fallback text regex search rather than structured grids).
+## 2. Match, Merge & Deduplication Policy
+To resolve duplicate records across disparate sources, the engine employs a tiered matching algorithm:
+*   **Tier 1 (Exact Match):** Short-circuits matches immediately on identical emails or phone numbers.
+*   **Tier 2 (Fuzzy Match):** Computes **Weighted Jaro-Winkler string similarity** on candidate names. Profiles with similarity scores $\ge 0.85$ are flagged as matches.
+*   **Transitive Deduplication:** Matches are clustered recursively. If raw Candidate A matches B, and B matches C, the engine merges all three into a single, unified canonical profile.
 
 ---
 
-## 4. Runtime Custom-Output Configuration
-To support dynamic client schemas, the **Projection Engine** interprets custom configurations at runtime:
-*   **Path Mapping**: Resolves paths like `fullName` to custom keys (e.g. `name`) and handles array indices (`emails[0]`) or wildcards (`skills[*].name`).
-*   **Missing Values**: Handled using one of three strategies:
-    *   `null`: Inserts `null` if the property is absent.
-    *   `omit`: Completely excludes the key from the output JSON.
-    *   `error`: Throws a `SchemaProjectionException` (400 Bad Request) if a required attribute is missing.
-*   **Metadata Stripping**: Dynamically filters out `provenance` and `confidence` fields if toggled off in the config.
+## 3. Configurable Conflict Resolution & Provenance
+*   **Source Priority Weights:** Field conflicts are resolved using deterministic priorities:
+    $$\text{PDF Resume (Priority Weight: 2)} > \text{Recruiter CSV Export (Priority Weight: 1)}$$
+    If priorities are equal, the system resolves conflicts using the most recently extracted timestamp.
+*   **Confidence Scoring:** The system computes extraction confidence dynamically (e.g. degrading field scores for regex fallback parsing vs. structured fields) and aggregates them into an overall profile confidence.
+*   **Immutable Provenance Audits:** Every canonical field maintains an audit link tracing back to the source filename, extraction method, date, and field-level confidence score.
 
 ---
 
-## 5. Edge Cases & Scope Omissions
+## 4. Runtime Configurable Projection Layer
+To output custom schemas dynamically without database migrations or code rebuilds, the engine evaluates projection configurations at runtime:
+*   **Path Mapping:** Evaluates expressions to map properties (e.g., `fullName` $\rightarrow$ `name`), indices (`emails[0]`), and wildcards (`skills[*].name`).
+*   **Missing Fields Strategy:** Operates on the top-level client configuration:
+    *   `null`: Standardizes absent properties as JSON `null`.
+    *   `omit`: Filters out keys entirely from the payload.
+    *   `error`: Returns an HTTP `400 Bad Request` validation listing missing fields if `"required": true` constraints fail.
+*   **Metadata Toggle:** Selectively includes/strips provenance records and confidence weights.
 
-### Edge Cases Handled
-1.  **Malformed Phone Formatting**: Input phones with extensions or text (e.g. `123-456-7890 ext 45`) are cleaned by regex, extracting digits to construct valid E.164 outputs.
-2.  **Wildcard Inconsistencies**: If a wildcard path is requested (e.g., `skills[*].name`) but the candidate has an empty skills list, the engine outputs an empty array `[]` instead of raising a null-pointer crash.
-3.  **Transitive Merge Chains**: If Raw A matches Raw B (by phone) and Raw B matches Raw C (by email), the system groups them recursively during pipeline execution to merge all three into a single canonical record.
-4.  **Schema Validation Failures**: When a required custom field is missing and `on_missing: "error"` is set, the engine halts and throws a validation response listing the missing paths.
+---
 
-### Deliberate Omissions Under Time Pressure
-1.  **Multi-lingual PDF Parsing**: Optical Character Recognition (OCR) and NLP parsing for foreign language resumes are omitted.
-2.  **Distributed Pipeline Locks**: Concurrency issues during large batch runs are handled via serializable DB transactions rather than Redis distributed locking.
-3.  **Dynamic OpenAPI Document Generation**: The server does not auto-generate updated API schema definitions on-the-fly for custom projections.
+## 5. Resiliency & Edge Cases Resolved
+1.  **Robust Normalization:** Ingested telephone fields containing prose or extensions (e.g., `(123) 456-7890 ext. 4`) are processed via regex to extract valid digits.
+2.  **Safe Wildcards:** If a wildcard mapping (e.g., `skills[*].name`) is requested for a candidate with no skills, the engine outputs an empty array `[]` instead of raising a NullPointerException.
+3.  **H2/PostgreSQL Context Separation:** Employs JPA transaction boundaries to isolate staging tables from production records during merge iterations.
