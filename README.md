@@ -171,6 +171,19 @@ erDiagram
 
 ---
 
+## Project Structure & Deliverables
+
+This repository contains all mandatory deliverables:
+* **Produced Output:** Located in the [`produced_output/`](./produced_output) folder:
+  * [`default_schema_output.json`](./produced_output/default_schema_output.json) - Result under the default canonical schema.
+  * [`custom_schema_output.json`](./produced_output/custom_schema_output.json) - Result under a custom schema projection.
+* **Test Suite:** Located under [`src/test/java/com/candidate/transformer/`](./src/test/java/com/candidate/transformer/):
+  * [`ControllerIntegrationTests.java`](./src/test/java/com/candidate/transformer/controller/ControllerIntegrationTests.java) - API endpoint integration tests.
+  * [`EngineTests.java`](./src/test/java/com/candidate/transformer/engine/EngineTests.java) - Logic validation for similarity matching, priority merges, and path projections.
+  * [`ServiceTests.java`](./src/test/java/com/candidate/transformer/service/ServiceTests.java) - Service-level profile operations tests.
+
+---
+
 ## Installation & Setup
 
 ### Prerequisites
